@@ -44,7 +44,7 @@ const COMMUTE_CONFIG: Record<'outbound' | 'inbound', LegConfig[]> = {
       title: '第一程：88 號巴士',
       displayStopName: '田園閣 (ST221)',
       configs: [
-        { route: '88', stopKeywords: ['田園閣'] }
+        { route: '88', stopKeywords: ['田園閣(ST221)'] }
       ],
     },
     {
@@ -63,9 +63,9 @@ const COMMUTE_CONFIG: Record<'outbound' | 'inbound', LegConfig[]> = {
       title: '第一程：91 / 91M / 91P 號巴士',
       displayStopName: '香港科技大學(南) (SK950)',
       configs: [
-        { route: '91', stopKeywords: ['香港科技大學', '科大'] },
-        { route: '91M', stopKeywords: ['香港科技大學', '科大'] },
-        { route: '91P', stopKeywords: ['香港科技大學', '科大'] },
+        { route: '91', stopKeywords: ['香港科技大學(南)', '科大'] },
+        { route: '91M', stopKeywords: ['香港科技大學(南)', '科大'] },
+        { route: '91P', stopKeywords: ['香港科技大學(南)(SK951)', '科大'] },
       ],
     },
     {
