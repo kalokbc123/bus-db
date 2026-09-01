@@ -63,9 +63,9 @@ const COMMUTE_CONFIG: Record<'outbound' | 'inbound', LegConfig[]> = {
       title: '第一程：91 / 91M / 91P 號巴士',
       displayStopName: '香港科技大學(南) (SK950)',
       configs: [
-        { route: '91', stopKeywords: ['香港科技大學(南)', '科大'] },
-        { route: '91M', stopKeywords: ['香港科技大學(南)', '科大'] },
-        { route: '91P', stopKeywords: ['香港科技大學(南)(SK951)', '科大'] },
+        { route: '91', stopKeywords: ['香港科技大學(南)','SK950'] },
+        { route: '91M', stopKeywords: ['香港科技大學(南)','SK950'] },
+        { route: '91P', stopKeywords: ['香港科技大學(南)(SK951)','SK951'] },
       ],
     },
     {
@@ -310,7 +310,7 @@ export default function PerfectBusDashboard() {
                               {diffMins === 0 ? '即將到達' : `${diffMins} 分鐘`}
                             </div>
 
-                            <div className="text-[14px] text-black-400 mt-1">
+                            <div className="text-[14px] text-black mt-1">
                               {new Date(item.eta!).toLocaleTimeString('zh-HK', {
                                 hour: '2-digit',
                                 minute: '2-digit',
