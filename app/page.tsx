@@ -10,11 +10,15 @@ const cleanStr = (str: string) =>
     .replace(/\s+/g, '')
     .toLowerCase();
 
-// API 工具
+// API 工具：加入防快取參數 (cache: 'no-store' 與 時間戳記)
 async function fetchApi(url: string, retries = 3): Promise<any> {
   for (let i = 0; i < retries; i++) {
     try {
-      const res = await fetch(url);
+      // 加上時間戳記防止瀏覽器快取舊資料
+      const separator = url.includes('?') ? '&' : '?';
+      const cleanUrl = `${url}${separator}_t=${Date.now()}`;
+
+      const res = await fetch(cleanUrl, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       return await res.json();
     } catch (err) {
@@ -89,20 +93,19 @@ interface EtaDetail {
 
 export default function PerfectBusDashboard() {
   const [activeTab, setActiveTab] = useState<'outbound' | 'inbound'>('outbound');
-  // key: "legId_route", value: exact stopId
   const [resolvedStopMap, setResolvedStopMap] = useState<Record<string, string>>({});
   const [etaData, setEtaData] = useState<Record<string, EtaDetail[]>>({});
   
   const [initializing, setInitializing] = useState(true);
   const [loadingEta, setLoadingEta] = useState(false);
   const [lastUpdated, setLastUpdated] = useState('');
+  const [nowTime, setNowTime] = useState<number>(Date.now()); // 用於精確更新倒數時間
 
-  // 步驟 1：雙向自動探索 Stop ID，徹底解決 91P / 91M 方向問題
+  // 步驟 1：雙向自動探索 Stop ID
   useEffect(() => {
     const resolveStops = async () => {
       setInitializing(true);
       try {
-        // 下載全港車站字典
         const allStopsRes = await fetchApi('https://data.etabus.gov.hk/v1/transport/kmb/stop');
         const allStopsMap = new Map<string, string>();
         (allStopsRes.data || []).forEach((s: any) => {
@@ -118,7 +121,6 @@ export default function PerfectBusDashboard() {
             const searchDirections: Array<'outbound' | 'inbound'> = ['outbound', 'inbound'];
             let matchedStopId = '';
 
-            // 雙向比對：先試 outbound，若無則試 inbound（防止 91P 等特快線方向定義相反）
             for (const dir of searchDirections) {
               if (matchedStopId) break;
               try {
@@ -159,14 +161,15 @@ export default function PerfectBusDashboard() {
     resolveStops();
   }, []);
 
-// 步驟 2：獲取實時到站 ETA（加入當前時間比對，徹底過濾過期班次）
+  // 步驟 2：獲取實時到站 ETA
   const fetchAllEtas = useCallback(async () => {
     if (Object.keys(resolvedStopMap).length === 0) return;
     setLoadingEta(true);
 
     const results: Record<string, EtaDetail[]> = {};
     const currentLegs = [...COMMUTE_CONFIG.outbound, ...COMMUTE_CONFIG.inbound];
-    const now = new Date().getTime(); // 取得當前時間戳記
+    const now = Date.now();
+    setNowTime(now); // 更新當前時間基準點
 
     await Promise.all(
       currentLegs.map(async (leg) => {
@@ -182,11 +185,8 @@ export default function PerfectBusDashboard() {
               const res = await fetchApi(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`);
               const rawEtas = res.data || [];
 
-              // 關鍵修復：除了比對路線外，同步過濾「到站時間小於當前時間」的過期班次
               const matched = rawEtas.filter((item: any) => {
                 if (item.route !== cfg.route || !item.eta) return false;
-
-                // 檢查該班次 ETA 是否大於或等於現在時間
                 const etaTime = new Date(item.eta).getTime();
                 return etaTime >= now;
               });
@@ -205,7 +205,6 @@ export default function PerfectBusDashboard() {
           })
         );
 
-        // 去除重複班次並依時間由近至遠排序
         const uniqueEtas = Array.from(
           new Map(legEtas.map((item) => [`${item.route}_${item.eta}`, item])).values()
         );
@@ -223,7 +222,7 @@ export default function PerfectBusDashboard() {
   useEffect(() => {
     if (!initializing) {
       fetchAllEtas();
-      const timer = setInterval(fetchAllEtas, 20000); // 20 秒自動更新
+      const timer = setInterval(fetchAllEtas, 20000);
       return () => clearInterval(timer);
     }
   }, [initializing, fetchAllEtas]);
@@ -297,8 +296,7 @@ export default function PerfectBusDashboard() {
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                       {etas.slice(0, 3).map((item, idx) => {
                         const etaTime = new Date(item.eta!).getTime();
-                        const now = new Date().getTime();
-                        const diffMins = Math.max(0, Math.floor((etaTime - now) / 60000));
+                        const diffMins = Math.max(0, Math.floor((etaTime - nowTime) / 60000));
 
                         return (
                           <div
