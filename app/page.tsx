@@ -52,8 +52,9 @@ const COMMUTE_CONFIG: Record<'outbound' | 'inbound', LegConfig[]> = {
       title: '第二程：91 / 91M 號巴士',
       displayStopName: '牛池灣村 (WT214)',
       configs: [
-        { route: '91', stopKeywords: ['牛池灣村'] },
-        { route: '91M', stopKeywords: ['牛池灣村'] },
+        { route: '91', stopKeywords: ['牛池灣村','WT214'] },
+        { route: '91M', stopKeywords: ['牛池灣村','WT214'] },
+        { route: '91P', stopKeywords: ['牛池灣村','WT214']},
       ],
     },
   ],
