@@ -159,13 +159,14 @@ export default function PerfectBusDashboard() {
     resolveStops();
   }, []);
 
-  // 步驟 2：獲取實時到站 ETA（移除 dir 過濾，直接依據車牌及站點讀取）
+// 步驟 2：獲取實時到站 ETA（加入當前時間比對，徹底過濾過期班次）
   const fetchAllEtas = useCallback(async () => {
     if (Object.keys(resolvedStopMap).length === 0) return;
     setLoadingEta(true);
 
     const results: Record<string, EtaDetail[]> = {};
     const currentLegs = [...COMMUTE_CONFIG.outbound, ...COMMUTE_CONFIG.inbound];
+    const now = new Date().getTime(); // 取得當前時間戳記
 
     await Promise.all(
       currentLegs.map(async (leg) => {
@@ -181,10 +182,14 @@ export default function PerfectBusDashboard() {
               const res = await fetchApi(`https://data.etabus.gov.hk/v1/transport/kmb/stop-eta/${stopId}`);
               const rawEtas = res.data || [];
 
-              // 直接匹配路線號碼與有 valid ETA 的車次，不再限制 dir
-              const matched = rawEtas.filter(
-                (item: any) => item.route === cfg.route && item.eta
-              );
+              // 關鍵修復：除了比對路線外，同步過濾「到站時間小於當前時間」的過期班次
+              const matched = rawEtas.filter((item: any) => {
+                if (item.route !== cfg.route || !item.eta) return false;
+
+                // 檢查該班次 ETA 是否大於或等於現在時間
+                const etaTime = new Date(item.eta).getTime();
+                return etaTime >= now;
+              });
 
               matched.forEach((item: any) => {
                 legEtas.push({
