@@ -74,7 +74,7 @@ const COMMUTE_CONFIG: Record<'outbound' | 'inbound', LegConfig[]> = {
       title: '第二程：88 號巴士 (往大圍)',
       displayStopName: '牛池灣轉車站-彩虹站 (WT891)',
       configs: [
-        { route: '88', stopKeywords: ['牛池灣轉車站', '彩虹站', '彩虹'] },
+        { route: '88', stopKeywords: ['牛池灣轉車站 - 彩虹站', '彩虹站'] },
       ],
     },
   ],
